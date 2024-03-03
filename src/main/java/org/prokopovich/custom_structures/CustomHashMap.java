@@ -1,7 +1,9 @@
 package org.prokopovich.custom_structures;
 
+import java.util.HashMap;
+
 public class CustomHashMap<K, V> {
-    private static final int INITIAL_CAPACITY = 10;
+    private final int INITIAL_CAPACITY = 10;
     private HashMapNode<K, V> data[];
     private int size;
 
@@ -66,6 +68,8 @@ public class CustomHashMap<K, V> {
             iterator = iterator.next;
         }
         iterator.next = new HashMapNode<>(key, value);
+        size++;
+        checkSize();
     }
 
     private int getIndex(K key) {
@@ -93,27 +97,68 @@ public class CustomHashMap<K, V> {
     }
 
     public void remove(K key) {
-        if(key!=null){
+        if (key != null) {
             int index = getIndex(key);
             if (data[index] == null) {
-                System.out.println("No suck a key");
+                System.out.println("No such a key");
                 return;
             }
-            if (data[index].key.equals(key)&&data[index].next==null) {//в бакете был список из 1 элемента
-                data[index]=null;
-            }
-            HashMapNode<K,V> first=data[index];
-            HashMapNode<K,V> previous=null;
-            HashMapNode<K,V> iterator=data[index];
-            while (iterator != null && !iterator.key.equals(key)) {
-                previous=iterator;
+            /**
+             * Мы проходим по списку узлов в бакете, начиная с первого узла iterator. Мы проверяем ключ каждого узла и,
+             * если находим узел с нужным ключом, удаляем его из списка, обновляя ссылки между предыдущим и следующим узлами.
+             *
+             * Если предыдущий узел previous не равен null, значит текущий узел, который мы хотим удалить,
+             * не является первым в списке. В этом случае мы обновляем ссылку next предыдущего узла,
+             * чтобы она указывала на следующий узел после удаляемого узла.
+             *
+             * Если предыдущий узел previous равен null, значит текущий узел, который мы хотим удалить, является первым в списке.
+             * В этом случае мы обновляем ссылку в бакете data[index], чтобы она указывала на следующий узел после удаляемого узла.
+             */
+            HashMapNode<K, V> previous = null;
+            HashMapNode<K, V> iterator = data[index];
+            while (iterator != null) {
+                if ((iterator.key.equals(key))) {
+                    if (previous != null) {
+                        previous.next = iterator.next;
+                    } else {
+                        data[index] = iterator.next;
+                    }
+                    size--;
+                    return;
+                }
+                previous = iterator;
                 iterator = iterator.next;
             }
-            if (previous!=null){
-                previous.next=iterator.next;
-                return;
-            }
-            first=iterator;
+            System.out.println("No such a key");
         }
+    }
+
+    public int size() {
+        return size;
+    }
+
+    private void checkSize() {
+        if ((double)size / INITIAL_CAPACITY >= 0.2f) {
+             resize();
+        }
+    }
+
+    private void resize() {
+        int newCapacity = this.INITIAL_CAPACITY * 2;
+        CustomHashMap<K, V> newMap = new CustomHashMap<>();
+        newMap.data=new HashMapNode[newCapacity];
+        for (int i = 0; i < data.length; i++) {
+            HashMapNode<K, V> element = data[i];
+            if (element != null) {
+                do {
+                    newMap.put(element.key, element.value);
+                    element=element.next;
+                } while (element != null);
+            }
+        }
+        this.data=newMap.data;
+    }
+    public int capacity(){
+        return this.data.length;
     }
 }
